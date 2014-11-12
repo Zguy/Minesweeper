@@ -8,30 +8,32 @@ struct Difficulty
 	unsigned int rows;
 	unsigned int numMines;
 };
+const Difficulty easy { 9, 9, 10 }, medium { 16, 16, 40 }, hard { 16, 30, 99 };
 
-void DrawField(const Minesweep::Minefield &field)
+void DrawField(const Minesweep::Minefield field, unsigned int cols, unsigned int rows)
 {
 	std::cout << "   ";
-	for (unsigned int x = 0; x < field.GetCols(); ++x)
+	for (unsigned int x = 0; x < cols; ++x)
 	{
 		std::cout << x;
 		if (x < 10)
 			std::cout << " ";
 	}
 	std::cout << "\n  ";
-	for (unsigned int i = 0; i < field.GetCols()*2+2; ++i)
+	for (unsigned int i = 0; i < cols*2+2; ++i)
 		std::cout << "-";
 	std::cout << "\n";
 
-	for (unsigned int y = 0; y < field.GetRows(); ++y)
+	for (unsigned int y = 0; y < rows; ++y)
 	{
 		if (y < 10)
 			std::cout << " ";
 		std::cout << y << "|";
-		for (unsigned int x = 0; x < field.GetCols(); ++x)
+		for (unsigned int x = 0; x < cols; ++x)
 		{
 			char tile;
-			switch (field.Get(x,y))
+			unsigned int fieldTile = Minesweep::Get(field,x,y,cols);
+			switch (fieldTile)
 			{
 				using namespace Minesweep::MineTile;
 				case EMPTY      : tile = ' '; break;
@@ -39,7 +41,7 @@ void DrawField(const Minesweep::Minefield &field)
 				case CLOSED     : tile = '#'; break;
 				case FLAG       : tile = '!'; break;
 				case WRONG_FLAG : tile = 'x'; break;
-				default         : tile = 48+(field.Get(x,y)); break; // 48+number = ASCII representation of the number
+				default         : tile = 48+fieldTile; break; // 48+number = ASCII representation of the number
 			}
 
 			std::cout << tile << " ";
@@ -47,11 +49,11 @@ void DrawField(const Minesweep::Minefield &field)
 		std::cout << "|" << y << "\n";
 	}
 	std::cout << "  ";
-	for (unsigned int i = 0; i < field.GetCols()*2+2; ++i)
+	for (unsigned int i = 0; i < cols*2+2; ++i)
 		std::cout << "-";
 	std::cout << "\n   ";
 
-	for (unsigned int x = 0; x < field.GetCols(); ++x)
+	for (unsigned int x = 0; x < cols; ++x)
 	{
 		std::cout << x;
 		if (x < 10)
@@ -64,8 +66,6 @@ void DrawField(const Minesweep::Minefield &field)
 
 Difficulty ChooseDifficulty()
 {
-	static const Difficulty easy { 9, 9, 10 }, medium { 16, 16, 40 }, hard { 16, 30, 99 };
-
 	Difficulty diff;
 	std::cout << "Difficulty (e,m,h): ";
 	char d;
@@ -99,17 +99,20 @@ int main()
 		while (playing)
 		{
 			std::cout << "Flags left: " << ms.GetFlagsLeft() << '\n';
-			DrawField(ms.GetField());
+			DrawField(ms.GetField(), ms.GetCols(), ms.GetRows());
 
-			if (ms.GetWinState() == PLAYING)
+			WinState winState = ms.GetWinState();
+			if (winState == WinState::PLAYING)
 			{
 				char flagmode;
 				unsigned int x, y;
 				std::cin >> flagmode >> x >> y;
 				std::cout << "\n\n\n" << std::endl;
 
-				if ((x > diff.cols)&&(y > diff.rows))
+				if (x > diff.cols && y > diff.rows)
+				{
 					playing = false;
+				}
 				else
 				{
 					if (flagmode == 'f')
@@ -118,12 +121,12 @@ int main()
 						ms.OpenTile(x,y);
 				}
 			}
-			else if (ms.GetWinState() == LOST)
+			else if (winState == WinState::LOST)
 			{
 				std::cout << "BAM! YOU LOST!" << std::endl;
 				playing = false;
 			}
-			else if (ms.GetWinState() == WON)
+			else if (winState == WinState::WON)
 			{
 				std::cout << "YOU WON!" << std::endl;
 				playing = false;

@@ -1,5 +1,4 @@
 set(SRC
-	"Minefield.cpp"
 	"Minefield.h"
 	"MinefieldGenerator.cpp"
 	"MinefieldGenerator.h"

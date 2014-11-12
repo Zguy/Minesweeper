@@ -1,6 +1,6 @@
 #include "SFMLMinefield.h"
 
-SFMLMinefield::SFMLMinefield(const Minesweep::Minefield &field, const sf::Vector2f &origin) : origin(origin), field(field)
+SFMLMinefield::SFMLMinefield(const Minesweep::Minefield field, unsigned int cols, unsigned int rows, const sf::Vector2f &origin) : origin(origin), cols(cols), rows(rows), field(field)
 {
 	closedTile.loadFromFile("data/closed.png");
 	openTile.loadFromFile("data/open.png");
@@ -33,14 +33,15 @@ void SFMLMinefield::UpdateField()
 {
 	tiles.clear();
 
-	for (unsigned int y = 0; y < field.GetRows(); ++y)
+	for (unsigned int y = 0; y < rows; ++y)
 	{
-		for (unsigned int x = 0; x < field.GetCols(); ++x)
+		for (unsigned int x = 0; x < cols; ++x)
 		{
 			bool useFrontTile = true;
 			sf::Sprite tile;
 			sf::Sprite backTile;
-			switch (field.Get(x,y))
+			unsigned int fieldTile = Minesweep::Get(field,x,y,cols);
+			switch (fieldTile)
 			{
 				using namespace Minesweep::MineTile;
 				case EMPTY      : backTile = sf::Sprite(openTile);   useFrontTile = false;             break;
@@ -48,7 +49,7 @@ void SFMLMinefield::UpdateField()
 				case CLOSED     : backTile = sf::Sprite(closedTile); useFrontTile = false;             break;
 				case FLAG       : backTile = sf::Sprite(closedTile); tile = sf::Sprite(flagTile);      break;
 				case WRONG_FLAG : backTile = sf::Sprite(closedTile); tile = sf::Sprite(wrongFlagTile); break;
-				default         : backTile = sf::Sprite(openTile);   tile = sf::Sprite(numTile[field.Get(x,y)-1]); break;
+				default         : backTile = sf::Sprite(openTile);   tile = sf::Sprite(numTile[fieldTile-1]); break;
 			}
 
 			sf::Vector2f tilePos = GetTilePosition(x,y);
@@ -76,14 +77,14 @@ void SFMLMinefield::UpdateField()
 Tile *SFMLMinefield::GetTileFromMouse(const sf::Vector2i &mousePos)
 {
 	Tile *tile = nullptr;
-	for (TileList::iterator it = tiles.begin(); it != tiles.end(); ++it)
+	for (Tile &it : tiles)
 	{
-		sf::Sprite &currTile = (*it).sprite;
+		sf::Sprite &currTile = it.sprite;
 		const sf::Vector2f &pos = currTile.getPosition();
 		const sf::FloatRect bounds = currTile.getLocalBounds();
 		if ((mousePos.x > pos.x)&&(mousePos.x < pos.x+bounds.width)&&(mousePos.y > pos.y)&&(mousePos.y < pos.y+bounds.height))
 		{
-			tile = &(*it);
+			tile = &it;
 			break;
 		}
 	}

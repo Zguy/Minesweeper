@@ -8,9 +8,9 @@
 namespace Minesweep
 {
 
-enum WinState
+enum class WinState
 {
-	PLAYING = 1,
+	PLAYING,
 	WON,
 	LOST
 };
@@ -18,29 +18,32 @@ enum WinState
 class Minesweeper
 {
 	public:
-		Minesweeper(const unsigned int cols, const unsigned int rows);
+		Minesweeper(unsigned int cols, unsigned int rows);
 		~Minesweeper();
 
 		static inline void SeedRandom(unsigned int seed = std::time(nullptr)) { std::srand(seed); }
 
-		void NewField(const unsigned int numMines);
+		void NewField(unsigned int mineCount);
 
-		void FlagTile(const int x, const int y);
+		void FlagTile(int x, int y);
 
-		void OpenTile(const int x, const int y);
+		void OpenTile(int x, int y);
 
-		void OpenEmptiesFrom(const unsigned int x, const unsigned int y);
-		void OpenAllMines(bool markWrongs = true);
+		void OpenEmptiesFrom(unsigned int x, unsigned int y);
+		void OpenAllMines(bool markWrongs);
 
-		inline const Minefield &GetField() const { return playfield; }
-		inline const int GetFlagsLeft() const { return flagsLeft; }
-		inline const WinState GetWinState() const { return winState; }
+		inline unsigned int GetCols() const { return cols; }
+		inline unsigned int GetRows() const { return rows; }
+		inline const Minefield GetField() const { return playfield; }
+
+		inline int GetFlagsLeft() const { return flagsLeft; }
+		inline WinState GetWinState() const { return winState; }
 
 	private:
 		void CheckForWin();
 
-		Minefield field;
-		Minefield playfield;
+		unsigned int cols, rows, count;
+		Minefield field, playfield;
 
 		int flagsLeft;
 

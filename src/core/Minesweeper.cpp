@@ -4,64 +4,83 @@
 namespace Minesweep
 {
 
-Minesweeper::Minesweeper(const unsigned int cols, const unsigned int rows) : field(cols,rows), playfield(cols,rows,true), flagsLeft(0), winState(PLAYING)
+Minesweeper::Minesweeper(unsigned int cols, unsigned int rows) : cols(cols), rows(rows), count(cols * rows), flagsLeft(0), winState(WinState::PLAYING)
 {
+	field = new unsigned int[count];
+	playfield = new unsigned int[count];
+
+	for (unsigned int i = 0; i < count; ++i)
+	{
+		field[i] = MineTile::EMPTY;
+		playfield[i] = MineTile::CLOSED;
+	}
 }
 
 Minesweeper::~Minesweeper()
 {
+	delete[] field;
+	delete[] playfield;
+	field = playfield = nullptr;
 }
 
-void Minesweeper::NewField(const unsigned int numMines)
+void Minesweeper::NewField(unsigned int mineCount)
 {
-	MinefieldGenerator gen(field);
-	gen.Generate(numMines);
+	Generate(field, cols, rows, mineCount);
 
-	playfield.Clear(true);
-
-	flagsLeft = numMines;
-}
-
-void Minesweeper::FlagTile(const int x, const int y)
-{
-	if ((x >= 0)&&(x < static_cast<const int>(field.GetCols()))&&(y >= 0)&&(y < static_cast<const int>(field.GetRows())))
+	for (unsigned int i = 0; i < count; ++i)
 	{
-		if (playfield.Get(x,y) == MineTile::CLOSED)
+		playfield[i] = MineTile::CLOSED;
+	}
+
+	flagsLeft = mineCount;
+}
+
+void Minesweeper::FlagTile(int x, int y)
+{
+	if (x >= 0 && x < static_cast<int>(cols) && y >= 0 && y < static_cast<int>(rows))
+	{
+		unsigned int &tile = Get(playfield,x,y,cols);
+		if (tile == MineTile::CLOSED)
 		{
-			playfield.Get(x,y) = MineTile::FLAG;
+			tile = MineTile::FLAG;
 			--flagsLeft;
 		}
-		else if (playfield.Get(x,y) == MineTile::FLAG)
+		else if (tile == MineTile::FLAG)
 		{
-			playfield.Get(x,y) = MineTile::CLOSED;
+			tile = MineTile::CLOSED;
 			++flagsLeft;
 		}
 	}
 }
 
-void Minesweeper::OpenTile(const int x, const int y)
+void Minesweeper::OpenTile(int x, int y)
 {
-	if ((x >= 0)&&(x < static_cast<const int>(field.GetCols()))&&(y >= 0)&&(y < static_cast<const int>(field.GetRows()))&&(playfield.Get(x,y) == MineTile::CLOSED))
+	if (x >= 0 && x < static_cast<int>(cols) && y >= 0 && y < static_cast<int>(rows))
 	{
-		playfield.Get(x,y) = field.Get(x,y);
+		unsigned int &playtile = Get(playfield,x,y,cols);
+		if (playtile == MineTile::CLOSED)
+		{
+			unsigned int &tile = Get(field,x,y,cols);
+			playtile = tile;
 
-		if (field.Get(x,y) == MineTile::EMPTY)
-		{
-			OpenEmptiesFrom(x,y);
-		}
-		else if (field.Get(x,y) == MineTile::MINE)
-		{
-			OpenAllMines();
-			winState = LOST;
-		}
-		else
-		{
-			CheckForWin();
+			if (tile == MineTile::EMPTY)
+			{
+				OpenEmptiesFrom(x,y);
+			}
+			else if (tile == MineTile::MINE)
+			{
+				OpenAllMines(true);
+				winState = WinState::LOST;
+			}
+			else
+			{
+				CheckForWin();
+			}
 		}
 	}
 }
 
-void Minesweeper::OpenEmptiesFrom(const unsigned int x, const unsigned int y)
+void Minesweeper::OpenEmptiesFrom(unsigned int x, unsigned int y)
 {
 	OpenTile(x-1, y-1);
 	OpenTile(x  , y-1);
@@ -75,36 +94,33 @@ void Minesweeper::OpenEmptiesFrom(const unsigned int x, const unsigned int y)
 
 void Minesweeper::OpenAllMines(bool markWrongs)
 {
-	for (unsigned int y = 0; y < field.GetRows(); ++y)
+	for (unsigned int i = 0; i < count; ++i)
 	{
-		for (unsigned int x = 0; x < field.GetCols(); ++x)
+		bool isMine = field[i] == MineTile::MINE;
+		bool isFlag = playfield[i] == MineTile::FLAG;
+		if (isMine && !isFlag)
 		{
-			if (field.Get(x,y) == MineTile::MINE)
-			{
-				if (playfield.Get(x,y) != MineTile::FLAG)
-					playfield.Get(x,y) = MineTile::MINE;
-			}
-			else
-				if ((markWrongs)&&(playfield.Get(x,y) == MineTile::FLAG))
-					playfield.Get(x,y) = MineTile::WRONG_FLAG;
+			playfield[i] = MineTile::MINE;
+		}
+		else if (markWrongs && !isMine && isFlag)
+		{
+			playfield[i] = MineTile::WRONG_FLAG;
 		}
 	}
 }
 
 void Minesweeper::CheckForWin()
 {
-	for (unsigned int y = 0; y < field.GetRows(); ++y)
+	for (unsigned int i = 0; i < count; ++i)
 	{
-		for (unsigned int x = 0; x < field.GetCols(); ++x)
-		{
-			if (((playfield.Get(x,y) == MineTile::CLOSED)||(playfield.Get(x,y) == MineTile::FLAG))&&(field.Get(x,y) != MineTile::MINE))
-				return;
-		}
+		unsigned int tile = playfield[i];
+		if ((tile == MineTile::CLOSED || tile == MineTile::FLAG) && field[i] != MineTile::MINE)
+			return;
 	}
 
 	// If we get through the loop, we have won!
 	OpenAllMines(false);
-	winState = WON;
+	winState = WinState::WON;
 }
 
 }

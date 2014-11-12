@@ -15,23 +15,11 @@ namespace MineTile
 	};
 }
 
-class Minefield
+typedef unsigned int *Minefield;
+
+inline unsigned int &Get(Minefield field, unsigned int x, unsigned int y, unsigned int cols)
 {
-	public:
-		Minefield(const unsigned int cols, const unsigned int rows, bool close = false);
-		~Minefield();
-
-		inline unsigned int &Get(const unsigned int x, const unsigned int y) { return field[(y*cols)+x]; }
-		inline const unsigned int &Get(const unsigned int x, const unsigned int y) const { return field[(y*cols)+x]; }
-
-		void Clear(bool close = false);
-
-		inline const unsigned int GetCols() const { return cols; }
-		inline const unsigned int GetRows() const { return rows; }
-
-	private:
-		unsigned int *field;
-		const unsigned int cols, rows;
-};
+	return field[(y*cols)+x];
+}
 
 }

@@ -7,8 +7,8 @@
 
 #include <vector>
 
-static const unsigned int TILESIZE = 32;
-static const float TILEPADDING = 1.0f;
+const unsigned int TILESIZE = 32;
+const float TILEPADDING = 1.0f;
 
 struct Tile
 {
@@ -22,7 +22,7 @@ typedef std::vector<Tile> TileList;
 class SFMLMinefield
 {
 	public:
-		SFMLMinefield(const Minesweep::Minefield &field, const sf::Vector2f &origin);
+		SFMLMinefield(const Minesweep::Minefield field, unsigned int cols, unsigned int rows, const sf::Vector2f &origin);
 		~SFMLMinefield();
 
 		void DrawField(sf::RenderWindow &win);
@@ -37,7 +37,7 @@ class SFMLMinefield
 
 		inline sf::Vector2f GetSizeOfField()
 		{
-			return sf::Vector2f(GetTilePosition(field.GetCols()-1, 0).x + TILESIZE+TILEPADDING, GetTilePosition(0, field.GetRows()-1).y + TILESIZE+TILEPADDING);
+			return sf::Vector2f(GetTilePosition(cols-1, 0).x + TILESIZE+TILEPADDING, GetTilePosition(0, rows-1).y + TILESIZE+TILEPADDING);
 		}
 
 		inline void SetOrigin(const sf::Vector2f &nOrigin) { origin = nOrigin; }
@@ -54,5 +54,6 @@ class SFMLMinefield
 
 		sf::Vector2f origin;
 
-		const Minesweep::Minefield &field;
+		unsigned int cols, rows;
+		const Minesweep::Minefield field;
 };

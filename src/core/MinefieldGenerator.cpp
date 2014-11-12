@@ -5,43 +5,33 @@
 namespace Minesweep
 {
 
-MinefieldGenerator::MinefieldGenerator(Minefield &field) : field(field)
+namespace
 {
-}
 
-MinefieldGenerator::~MinefieldGenerator()
+void PlaceMines(Minefield field, unsigned int cols, unsigned int rows, unsigned int mineCount)
 {
-}
-
-void MinefieldGenerator::Generate(const unsigned int numMines)
-{
-	PlaceMines(numMines);
-	PlaceNumbers();
-}
-
-void MinefieldGenerator::PlaceMines(const unsigned int numMines)
-{
-	for (unsigned int i = 0; i < numMines; ++i)
+	for (unsigned int i = 0; i < mineCount; ++i)
 	{
 		unsigned int x, y;
 
 		do
 		{
-			x = std::rand() % field.GetCols();
-			y = std::rand() % field.GetRows();
-		} while (field.Get(x,y) != MineTile::EMPTY);
+			x = std::rand() % cols;
+			y = std::rand() % rows;
+		} while (Get(field,x,y,cols) != MineTile::EMPTY);
 
-		field.Get(x,y) = MineTile::MINE;
+		Get(field,x,y,cols) = MineTile::MINE;
 	}
 }
 
-void MinefieldGenerator::PlaceNumbers()
+void PlaceNumbers(Minefield field, unsigned int cols, unsigned int rows)
 {
-	for (unsigned int y = 0; y < field.GetRows(); ++y)
+	for (unsigned int y = 0; y < rows; ++y)
 	{
-		for (unsigned int x = 0; x < field.GetCols(); ++x)
+		for (unsigned int x = 0; x < cols; ++x)
 		{
-			if (field.Get(x,y) == MineTile::EMPTY)
+			unsigned int &tile = Get(field,x,y,cols);
+			if (tile == MineTile::EMPTY)
 			{
 				unsigned int minesAround = 0;
 				for (int dy = -1; dy <= +1; ++dy)
@@ -50,21 +40,29 @@ void MinefieldGenerator::PlaceNumbers()
 					{
 						if (!((dx == 0)&&(dy == 0)))
 						{
-							const unsigned int nx = x+dx;
-							const unsigned int ny = y+dy;
+							unsigned int nx = x+dx;
+							unsigned int ny = y+dy;
 
-							if ((nx >= 0)&&(nx < field.GetCols())&&(ny >= 0)&&(ny < field.GetRows()))
+							if (nx >= 0 && nx < cols && ny >= 0 && ny < rows && Get(field,nx,ny,cols) == MineTile::MINE)
 							{
-								if (field.Get(nx,ny) == MineTile::MINE)
-									++minesAround;
+								++minesAround;
 							}
 						}
 					}
 				}
-				field.Get(x,y) = minesAround;
+
+				tile = minesAround;
 			}
 		}
 	}
+}
+
+}
+
+void Generate(Minefield field, unsigned int cols, unsigned int rows, unsigned int mineCount)
+{
+	PlaceMines(field, cols, rows, mineCount);
+	PlaceNumbers(field, cols, rows);
 }
 
 }

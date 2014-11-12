@@ -13,10 +13,10 @@ struct Difficulty
 	unsigned int rows;
 	unsigned int numMines;
 };
+const Difficulty easy { 9, 9, 10 }, medium { 16, 16, 40 }, hard { 16, 30, 99 };
+
 Difficulty ChooseDifficulty()
 {
-	static const Difficulty easy { 9, 9, 10 }, medium { 16, 16, 40 }, hard { 16, 30, 99 };
-
 	Difficulty diff;
 	std::cout << "Difficulty (e,m,h): ";
 	char d;
@@ -44,7 +44,7 @@ int main()
 	ms.NewField(diff.numMines);
 
 	sf::Vector2f fieldOrigin(10.f, 10.f);
-	SFMLMinefield minefield(ms.GetField(), fieldOrigin);
+	SFMLMinefield minefield(ms.GetField(), ms.GetCols(), ms.GetRows(), fieldOrigin);
 
 	sf::Vector2f fieldSize = minefield.GetSizeOfField();
 	sf::Uint32 windowStyle = sf::Style::Titlebar | sf::Style::Close;
@@ -89,7 +89,7 @@ int main()
 			}
 			else
 			{
-				if ((ev.type == sf::Event::KeyPressed)&&(ev.key.code == sf::Keyboard::Return))
+				if (ev.type == sf::Event::KeyPressed && ev.key.code == sf::Keyboard::Return)
 				{
 					app.close();
 				}
@@ -98,7 +98,8 @@ int main()
 
 		minefield.UpdateField();
 
-		if (ms.GetWinState() == WinState::PLAYING)
+		WinState winState = ms.GetWinState();
+		if (winState == WinState::PLAYING)
 		{
 			std::stringstream t;
 			t << "Time: " << static_cast<unsigned int>(timer.getElapsedTime().asSeconds()) << " s";
@@ -117,13 +118,13 @@ int main()
 		app.draw(timeString);
 		app.draw(flagLeftString);
 
-		if (ms.GetWinState() != WinState::PLAYING)
+		if (winState != WinState::PLAYING)
 		{
 			sf::Text winString(sf::String(), font, 30);
 
-			if (ms.GetWinState() == WinState::WON)
+			if (winState == WinState::WON)
 				winString.setString("You Won!");
-			else if (ms.GetWinState() == WinState::LOST)
+			else if (winState == WinState::LOST)
 				winString.setString("You Lost!");
 
 			winString.setPosition((app.getSize().x / 2.f) - (winString.getLocalBounds().width / 2.f), (app.getSize().y / 2.f)-50.f);
